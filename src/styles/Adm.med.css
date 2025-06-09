@@ -37,7 +37,7 @@ body {
 
 header {
   background-color: var(--primary-color);
-  color: white;
+  color: var(--white);
   padding: 20px 0;
   text-align: center;
   margin-bottom: 30px;
@@ -54,9 +54,7 @@ h2 {
 }
 
 .main-content {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 30px;
+  padding: 20px;
 }
 
 .form-container {
@@ -91,9 +89,9 @@ input:focus, select:focus {
   border-color: var(--primary-color);
 }
 
-button {
+button, .button-primary {
   background-color: var(--primary-color);
-  color: white;
+  color: var(--white);
   border: none;
   padding: 12px 20px;
   border-radius: var(--border-radius);
@@ -103,8 +101,24 @@ button {
   transition: background-color 0.3s ease;
 }
 
-button:hover {
+button:hover, .button-primary:hover {
   background-color: #005bc2;
+}
+
+.button-secondary {
+  background-color: #6c757d;
+  color: var(--white);
+  border: none;
+  padding: 12px 20px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.button-secondary:hover {
+  background-color: #5a6268;
 }
 
 .items-container {
@@ -172,13 +186,13 @@ button:hover {
 }
 
 .delete-btn {
-  background-color: var(--danger-bg) !important;
-  color: var(--danger-color) !important;
+  background-color: var(--danger-bg);
+  color: var(--danger-color);
 }
 
 .delete-btn:hover {
-  background-color: var(--danger-color) !important;
-  color: white !important;
+  background-color: var(--danger-color);
+  color: var(--white);
 }
 
 .no-items {
@@ -195,7 +209,7 @@ button:hover {
 
 .stat-card {
   flex: 1;
-  background: white;
+  background: var(--white);
   padding: 15px;
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
@@ -228,12 +242,48 @@ button:hover {
   opacity: 1;
 }
 
+.tabela-pacientes {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.tabela-pacientes th,
+.tabela-pacientes td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.tabela-pacientes th {
+  background-color: var(--primary-color);
+  color: var(--white);
+  font-weight: 600;
+}
+
+.tabela-pacientes tr:nth-child(even) {
+  background-color: var(--bg-light);
+}
+
+.tabela-pacientes tr:hover {
+  background-color: var(--primary-light);
+}
+
 @media (max-width: 768px) {
-  .main-content {
-    grid-template-columns: 1fr;
+  .container {
+    padding: 10px;
   }
 
   .stats {
     flex-direction: column;
+  }
+
+  .tabela-pacientes {
+    font-size: 0.9rem;
+  }
+
+  .tabela-pacientes th,
+  .tabela-pacientes td {
+    padding: 8px;
   }
 }

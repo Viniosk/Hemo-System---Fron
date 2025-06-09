@@ -1,75 +1,61 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import '../../styles/Evo.css';
+import logoFSPH from '../../assets/fsph_logo.png';
+import menuIcon from '../../assets/menu_hamburger.png';
+import cadIcon from '../../assets/icons/cadastros.png';
+import recepIcon from '../../assets/icons/recepcao.png';
+import ambIcon from '../../assets/icons/ambulatorio.png';
+import labIcon from '../../assets/icons/laboratorio.png';
+import logoutIcon from '../../assets/icons/logout_icon.png';
+import { AuthContext } from '../../App';
+import { evolucoesMock, pacientesMock } from '../../data/mocks';
 
-
-
-
-const historiasMock = [
-  {
-    tipo: "consulta",
-    tipoLabel: "Consulta",
-    dataCompleta: "29/05/2025 - 14:30",
-    data: new Date(2025, 4, 29, 14, 30),
-    profissional: "Dr. Carlos Silva - CRM 12345",
-    texto:
-      "Paciente relata melhora dos sintomas após início do tratamento. Mantém pressão arterial controlada (120x80 mmHg). Ausculta pulmonar sem alterações. Mantida prescrição atual por mais 15 dias.",
-  },
-  {
-    tipo: "avaliacao",
-    tipoLabel: "Avaliação",
-    dataCompleta: "25/05/2025 - 09:15",
-    data: new Date(2025, 4, 25, 9, 15),
-    profissional: "Enf. Ana Paula - COREN 54321",
-    texto:
-      "Realizada aferição de sinais vitais. PA: 130x85 mmHg, FC: 78 bpm, FR: 16 irpm, Tax: 36.5°C. Paciente refere dor leve no local da aplicação da medicação. Orientado sobre cuidados locais.",
-  },
-  {
-    tipo: "procedimento",
-    tipoLabel: "Procedimento",
-    dataCompleta: "20/05/2025 - 11:00",
-    data: new Date(2025, 4, 20, 11, 0),
-    profissional: "Dr. Carlos Silva - CRM 12345",
-    texto:
-      "Realizada administração de medicação conforme prescrição. Paciente sem intercorrências durante o procedimento. Orientado sobre possíveis efeitos colaterais e retorno em 10 dias.",
-  },
-  {
-    tipo: "intercorrencia",
-    tipoLabel: "Intercorrência",
-    dataCompleta: "15/05/2025 - 16:45",
-    data: new Date(2025, 4, 15, 16, 45),
-    profissional: "Enf. Ana Paula - COREN 54321",
-    texto:
-      "Paciente compareceu à unidade relatando reação alérgica leve após uso da medicação prescrita. Apresenta eritema e prurido em região de tronco. Comunicado médico responsável, que orientou suspensão da medicação e prescrição de anti-histamínico.",
-  },
-  {
-    tipo: "consulta",
-    tipoLabel: "Consulta",
-    dataCompleta: "10/05/2025 - 10:00",
-    data: new Date(2025, 4, 10, 10, 0),
-    profissional: "Dr. Carlos Silva - CRM 12345",
-    texto:
-      "Primeira consulta. Paciente relata quadro de hipertensão arterial há 5 anos, em uso irregular de medicação. PA atual: 150x95 mmHg. Solicitados exames laboratoriais e ECG. Iniciado tratamento com Losartana 50mg 1x/dia e orientações sobre dieta hipossódica e atividade física regular.",
-  },
-];
-
-const dateToBR = (d) =>
-  d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
-
-const maskDate = (val) => {
-  const nums = val.replace(/\D/g, "");
-  if (nums.length <= 2) return nums;
-  if (nums.length <= 4) return `${nums.slice(0, 2)}/${nums.slice(2)}`;
-  return `${nums.slice(0, 2)}/${nums.slice(2, 4)}/${nums.slice(4, 8)}`;
-};
-
-const VisualizarEvolucaoPaciente = () => {
+export default function EvoVisualizacao() {
+  const { setIsAuthenticated } = React.useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [filtros, setFiltros] = useState({
     dataInicio: "",
     dataFim: "",
     tipoEvolucao: "",
     profissional: "",
   });
-  const [historico, setHistorico] = useState(historiasMock);
+  const [form, setForm] = useState({
+    prontuario: '',
+    nomeUsuario: '',
+    dataNasc: '',
+    cpfPaciente: '',
+  });
+  const [historico, setHistorico] = useState(evolucoesMock);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const cpf = params.get('cpf');
+    if (cpf) {
+      const paciente = pacientesMock.find(p => p.cpf === cpf);
+      if (paciente) {
+        setForm(prev => ({
+          ...prev,
+          nomeUsuario: paciente.nome,
+          dataNasc: paciente.dataNasc,
+          cpfPaciente: paciente.cpf,
+        }));
+        setHistorico(evolucoesMock.filter(h => h.cpfPaciente === cpf));
+      }
+    }
+  }, [location]);
+
+  const dateToBR = (d) =>
+    d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+  const maskDate = (val) => {
+    const nums = val.replace(/\D/g, "");
+    if (nums.length <= 2) return nums;
+    if (nums.length <= 4) return `${nums.slice(0, 2)}/${nums.slice(2)}`;
+    return `${nums.slice(0, 2)}/${nums.slice(2, 4)}/${nums.slice(4, 8)}`;
+  };
 
   const handleFiltroChange = (e) => {
     const { id, value } = e.target;
@@ -79,13 +65,26 @@ const VisualizarEvolucaoPaciente = () => {
     }));
   };
 
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [id]: id === 'dataNasc' ? maskDate(value) : value,
+      cpfPaciente: id === 'nomeUsuario' ? (pacientesMock.find(p => p.nome === value)?.cpf || '') : prev.cpfPaciente,
+    }));
+    if (id === 'nomeUsuario') {
+      const paciente = pacientesMock.find(p => p.nome === value);
+      setHistorico(paciente ? evolucoesMock.filter(h => h.cpfPaciente === paciente.cpf) : evolucoesMock);
+    }
+  };
+
   const limparFiltros = () => {
     setFiltros({ dataInicio: "", dataFim: "", tipoEvolucao: "", profissional: "" });
-    setHistorico(historiasMock);
+    setHistorico(form.cpfPaciente ? evolucoesMock.filter(h => h.cpfPaciente === form.cpfPaciente) : evolucoesMock);
   };
 
   const aplicarFiltros = () => {
-    let lista = [...historiasMock];
+    let lista = form.cpfPaciente ? evolucoesMock.filter(h => h.cpfPaciente === form.cpfPaciente) : [...evolucoesMock];
     const { dataInicio, dataFim, tipoEvolucao, profissional } = filtros;
 
     if (dataInicio.length === 10) {
@@ -108,53 +107,75 @@ const VisualizarEvolucaoPaciente = () => {
     alert("Filtros aplicados!");
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    navigate('/login');
+  };
+
   return (
     <div className="container">
-      {/* Sidebar omitida para brevidade */}
+      <aside className="sidebar-fixed-left">
+        <div className="logo-container-fixed">
+          <img src={logoFSPH} alt="Logo FSPH" className="logo-fundo-saude" />
+        </div>
+        <nav className="menu-navegacao-esquerda">
+          <h2 className="menu-navegacao-titulo">3. Ambulatório</h2>
+          <ul>
+            <li><Link to="/prontuario">3.1 Prontuário Eletrônico</Link></li>
+            <li><Link to="/evo-ambulatorio">3.2 Evolução</Link></li>
+            <li><Link to="/evo-visualizar">3.3 Visualizar Evoluções</Link></li>
+          </ul>
+        </nav>
+      </aside>
+
       <main className="main-content">
         <header className="main-header">
           <h1>Visualizar Evolução do Paciente</h1>
-          <button className="hamburger-button" id="hamburgerBtn">
-            <img src="icons/menu_hamburger.png" alt="Menu" />
+          <button className="hamburger-button" onClick={() => setMenuOpen(!menuOpen)}>
+            <img src={menuIcon} alt="Menu" />
           </button>
         </header>
 
         <div className="visualizacao-info">
-          <p>
-            Esta tela permite apenas a visualização do histórico de evoluções. Para
-            registrar novas evoluções, acesse pelo menu Ambulatório.
-          </p>
+          <p>Esta tela permite apenas a visualização do histórico de evoluções. Para registrar novas evoluções, acesse pelo menu Ambulatório.</p>
         </div>
 
         <section className="form-cadastro-container">
-          {/* Dados básicos do paciente */}
           <div className="form-row">
             <div className="form-group prontuario">
               <label htmlFor="prontuario">Prontuário:</label>
               <div className="input-with-icon">
-                <input type="text" id="prontuario" name="prontuario" />
-                <button type="button" className="search-icon-button">
-                  &#128269;
-                </button>
+                <input
+                  type="text"
+                  id="prontuario"
+                  value={form.prontuario}
+                  onChange={handleInputChange}
+                />
+                <button type="button" className="search-icon-button">🔍</button>
               </div>
             </div>
             <div className="form-group nome-usuario">
               <label htmlFor="nomeUsuario">Nome Paciente:</label>
-              <input type="text" id="nomeUsuario" name="nomeUsuario" />
+              <input
+                type="text"
+                id="nomeUsuario"
+                value={form.nomeUsuario}
+                onChange={handleInputChange}
+              />
             </div>
             <div className="form-group data-nasc">
               <label htmlFor="dataNasc">Data Nasc:</label>
               <input
                 type="text"
                 id="dataNasc"
-                name="dataNasc"
                 placeholder="dd/mm/aa"
                 maxLength={8}
+                value={form.dataNasc}
+                onChange={handleInputChange}
               />
             </div>
           </div>
 
-          {/* Filtros */}
           <div className="filtro-container">
             <div className="filtro-titulo">Filtros de Visualização</div>
             <div className="form-row">
@@ -224,7 +245,6 @@ const VisualizarEvolucaoPaciente = () => {
             </div>
           </div>
 
-          {/* Histórico */}
           <h3 style={{ marginTop: 30, color: "#343a40" }}>Histórico de Evoluções</h3>
           <div className="historico-evolucao">
             {historico.length === 0 ? (
@@ -244,8 +264,20 @@ const VisualizarEvolucaoPaciente = () => {
           </div>
         </section>
       </main>
+
+      <aside className={`popup-menu-right ${menuOpen ? 'open' : ''}`}>
+        <ul>
+          <li><Link to="#"><img src={cadIcon} alt="" /> Cadastros</Link></li>
+          <li><Link to="/recepcao"><img src={recepIcon} alt="" /> Recepção</Link></li>
+          <li><Link to="/evo-ambulatorio"><img src={ambIcon} alt="" /> Ambulatório</Link></li>
+          <li><Link to="/estoque"><img src={labIcon} alt="" /> Estoque</Link></li>
+        </ul>
+        <ul>
+          <li><Link to="/login" onClick={handleLogout}><img src={logoutIcon} alt="Sair" /> Sair</Link></li>
+        </ul>
+      </aside>
+
+      {menuOpen && <div className="modal-fsph-overlay" onClick={() => setMenuOpen(false)}></div>}
     </div>
   );
-};
-
-export default VisualizarEvolucaoPaciente;
+}

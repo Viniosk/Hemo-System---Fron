@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import '../../styles/Evo.css';
+import logoFSPH from '../../assets/fsph_logo.png';
+import menuIcon from '../../assets/menu_hamburger.png';
+import cadIcon from '../../assets/icons/cadastros.png';
+import recepIcon from '../../assets/icons/recepcao.png';
+import ambIcon from '../../assets/icons/ambulatorio.png';
+import labIcon from '../../assets/icons/laboratorio.png';
+import logoutIcon from '../../assets/icons/logout_icon.png';
+import { AuthContext } from '../../App';
+import { pacientesMock, evolucoesMock } from '../../data/mocks';
 
-
-/**
- * Componente EvolucaoPaciente
- * Converte o HTML original de evolução do paciente para React.
- * Inclui lógicas de máscara de data, hora, seleção de permissão e histórico fixo de exemplo.
- */
-const EvolucaoPaciente = () => {
-  /* ----------------------------- estado ----------------------------- */
+export default function EvoAmbulatorio() {
+  const { setIsAuthenticated } = React.useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
   const hoje = new Date();
   const formatData = (d) =>
     d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -28,14 +35,32 @@ const EvolucaoPaciente = () => {
     numeroConselho: "",
     evolucaoTexto: "",
     anexo: null,
+    cpfPaciente: "",
   });
+  const [errors, setErrors] = useState({});
+  const [historico, setHistorico] = useState(evolucoesMock);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const cpf = params.get('cpf');
+    if (cpf) {
+      const paciente = pacientesMock.find(p => p.cpf === cpf);
+      if (paciente) {
+        setForm(prev => ({
+          ...prev,
+          nomeUsuario: paciente.nome,
+          dataNasc: paciente.dataNasc,
+          cpfPaciente: paciente.cpf,
+        }));
+      }
+    }
+  }, [location]);
 
   const handleRoleToggle = (novoRole) => {
     setRole(novoRole);
     setForm((prev) => ({ ...prev, conselho: novoRole === "medico" ? "crm" : "coren" }));
   };
 
-  /* ----------------------- helpers de máscara ---------------------- */
   const mascaraDataCurta = (value) => {
     const digits = value.replace(/\D/g, "");
     if (digits.length <= 2) return digits;
@@ -68,12 +93,39 @@ const EvolucaoPaciente = () => {
     setForm((prev) => ({ ...prev, [id]: val }));
   };
 
-  /* -------------------- submissão do formulário -------------------- */
+  const validateForm = () => {
+    const newErrors = {};
+    if (!form.prontuario) newErrors.prontuario = 'Prontuário é obrigatório';
+    if (!form.nomeUsuario) newErrors.nomeUsuario = 'Nome é obrigatório';
+    if (!form.dataNasc || !/^\d{2}\/\d{2}\/\d{2}$/.test(form.dataNasc)) newErrors.dataNasc = 'Data de nascimento inválida';
+    if (!form.tipoEvolucao) newErrors.tipoEvolucao = 'Tipo de evolução é obrigatório';
+    if (!form.profissional) newErrors.profissional = 'Profissional é obrigatório';
+    if (!form.conselho) newErrors.conselho = 'Conselho é obrigatório';
+    if (!form.evolucaoTexto) newErrors.evolucaoTexto = 'Texto da evolução é obrigatório';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      alert('Preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    const novaEvolucao = {
+      tipo: form.tipoEvolucao.toLowerCase(),
+      tipoLabel: form.tipoEvolucao,
+      dataCompleta: `${form.dataEvolucao} - ${form.horaEvolucao}`,
+      data: new Date(`${form.dataEvolucao.split('/').reverse().join('-')}T${form.horaEvolucao}`),
+      profissional: `${form.profissional} - ${form.conselho.toUpperCase()} ${form.numeroConselho}`,
+      texto: form.evolucaoTexto,
+      cpfPaciente: form.cpfPaciente,
+    };
+
+    setHistorico([novaEvolucao, ...historico]);
     alert("Evolução registrada com sucesso!");
 
-    // Limpa campos específicos
     setForm((prev) => ({
       ...prev,
       tipoEvolucao: "",
@@ -82,58 +134,39 @@ const EvolucaoPaciente = () => {
     }));
   };
 
-  /* ----------------- Histórico estático de exemplo ----------------- */
-  const historico = [
-    {
-      tipo: "Consulta",
-      data: "29/05/2025 - 14:30",
-      profissional: "Dr. Carlos Silva - CRM 12345",
-      texto:
-        "Paciente relata melhora dos sintomas após início do tratamento. Mantém pressão arterial controlada (120x80 mmHg). Ausculta pulmonar sem alterações. Mantida prescrição atual por mais 15 dias.",
-    },
-    {
-      tipo: "Avaliação",
-      data: "25/05/2025 - 09:15",
-      profissional: "Enf. Ana Paula - COREN 54321",
-      texto:
-        "Realizada aferição de sinais vitais. PA: 130x85 mmHg, FC: 78 bpm, FR: 16 irpm, Tax: 36.5°C. Paciente refere dor leve no local da aplicação da medicação. Orientado sobre cuidados locais.",
-    },
-    {
-      tipo: "Procedimento",
-      data: "20/05/2025 - 11:00",
-      profissional: "Dr. Carlos Silva - CRM 12345",
-      texto:
-        "Realizada administração de medicação conforme prescrição. Paciente sem intercorrências durante o procedimento. Orientado sobre possíveis efeitos colaterais e retorno em 10 dias.",
-    },
-  ];
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    navigate('/login');
+  };
 
-  /* --------------------------- render ------------------------------ */
   return (
     <div className="container">
-      {/* Sidebar */}
       <aside className="sidebar-fixed-left">
-        {/* ... omiti o conteúdo do menu para brevidade ... */}
+        <div className="logo-container-fixed">
+          <img src={logoFSPH} alt="Logo FSPH" className="logo-fundo-saude" />
+        </div>
+        <nav className="menu-navegacao-esquerda">
+          <h2 className="menu-navegacao-titulo">3. Ambulatório</h2>
+          <ul>
+            <li><Link to="/prontuario">3.1 Prontuário Eletrônico</Link></li>
+            <li><Link to="/evo-ambulatorio">3.2 Evolução</Link></li>
+            <li><Link to="/evo-visualizar">3.3 Visualizar Evoluções</Link></li>
+          </ul>
+        </nav>
       </aside>
 
-      {/* Conteúdo principal */}
       <main className="main-content">
         <header className="main-header">
-          <h1>
-            Evolução do Paciente
-            <span className="permission-badge permission-medico">Médico</span>
-            <span className="permission-badge permission-enfermeiro">Enfermeiro</span>
-          </h1>
-          <button className="hamburger-button" id="hamburgerBtn">
-            <img src="icons/menu_hamburger.png" alt="Menu" />
+          <h1>Evolução do Paciente</h1>
+          <button className="hamburger-button" onClick={() => setMenuOpen(!menuOpen)}>
+            <img src={menuIcon} alt="Menu" />
           </button>
         </header>
 
-        {/* Seletor de permissão */}
         <div className="permission-selector">
           <button
             type="button"
             className={`permission-toggle ${role === "medico" ? "active" : ""}`}
-            id="btnMedico"
             onClick={() => handleRoleToggle("medico")}
           >
             Médico
@@ -141,14 +174,12 @@ const EvolucaoPaciente = () => {
           <button
             type="button"
             className={`permission-toggle ${role === "enfermeiro" ? "active" : ""}`}
-            id="btnEnfermeiro"
             onClick={() => handleRoleToggle("enfermeiro")}
           >
             Enfermeiro
           </button>
         </div>
 
-        {/* Formulário */}
         <section className="form-cadastro-container">
           <div className="form-row">
             <div className="form-group prontuario">
@@ -160,10 +191,9 @@ const EvolucaoPaciente = () => {
                   value={form.prontuario}
                   onChange={handleInputChange}
                 />
-                <button type="button" className="search-icon-button">
-                  &#128269;
-                </button>
+                <button type="button" className="search-icon-button">🔍</button>
               </div>
+              {errors.prontuario && <span className="error">{errors.prontuario}</span>}
             </div>
             <div className="form-group nome-usuario">
               <label htmlFor="nomeUsuario">Nome Paciente:</label>
@@ -173,6 +203,7 @@ const EvolucaoPaciente = () => {
                 value={form.nomeUsuario}
                 onChange={handleInputChange}
               />
+              {errors.nomeUsuario && <span className="error">{errors.nomeUsuario}</span>}
             </div>
             <div className="form-group data-nasc">
               <label htmlFor="dataNasc">Data Nasc:</label>
@@ -184,6 +215,7 @@ const EvolucaoPaciente = () => {
                 value={form.dataNasc}
                 onChange={handleInputChange}
               />
+              {errors.dataNasc && <span className="error">{errors.dataNasc}</span>}
             </div>
           </div>
 
@@ -217,12 +249,13 @@ const EvolucaoPaciente = () => {
                   onChange={handleInputChange}
                 >
                   <option value="">Selecione</option>
-                  <option value="consulta">Consulta</option>
-                  <option value="avaliacao">Avaliação</option>
-                  <option value="procedimento">Procedimento</option>
-                  <option value="intercorrencia">Intercorrência</option>
-                  <option value="outro">Outro</option>
+                  <option value="Consulta">Consulta</option>
+                  <option value="Avaliação">Avaliação</option>
+                  <option value="Procedimento">Procedimento</option>
+                  <option value="Intercorrência">Intercorrência</option>
+                  <option value="Outro">Outro</option>
                 </select>
+                {errors.tipoEvolucao && <span className="error">{errors.tipoEvolucao}</span>}
               </div>
             </div>
 
@@ -235,6 +268,7 @@ const EvolucaoPaciente = () => {
                   value={form.profissional}
                   onChange={handleInputChange}
                 />
+                {errors.profissional && <span className="error">{errors.profissional}</span>}
               </div>
               <div className="form-group">
                 <label htmlFor="conselho">Conselho:</label>
@@ -248,6 +282,7 @@ const EvolucaoPaciente = () => {
                   <option value="coren">COREN</option>
                   <option value="outro">Outro</option>
                 </select>
+                {errors.conselho && <span className="error">{errors.conselho}</span>}
               </div>
               <div className="form-group">
                 <label htmlFor="numeroConselho">Número:</label>
@@ -268,15 +303,8 @@ const EvolucaoPaciente = () => {
                   rows={6}
                   value={form.evolucaoTexto}
                   onChange={handleInputChange}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    border: "1px solid #ced4da",
-                    borderRadius: 4,
-                    fontSize: "0.9em",
-                    boxSizing: "border-box",
-                  }}
                 />
+                {errors.evolucaoTexto && <span className="error">{errors.evolucaoTexto}</span>}
               </div>
             </div>
 
@@ -287,26 +315,22 @@ const EvolucaoPaciente = () => {
                   type="file"
                   id="anexoEvolucao"
                   onChange={handleInputChange}
-                  style={{ padding: "8px 0" }}
                 />
               </div>
             </div>
 
             <div className="form-actions">
-              <button type="submit" className="submit-button-main" id="btnRegistrarEvolucao">
-                Registrar Evolução
-              </button>
+              <button type="submit" className="submit-button-main">Registrar Evolução</button>
             </div>
           </form>
 
-          {/* Histórico */}
           <h3 style={{ marginTop: 30, color: "#343a40" }}>Histórico de Evoluções</h3>
           <div className="historico-evolucao">
-            {historico.map((h, idx) => (
+            {historico.filter(h => h.cpfPaciente === form.cpfPaciente).map((h, idx) => (
               <div className="evolucao-item" key={idx}>
                 <div className="evolucao-header">
-                  <span className="evolucao-tipo">{h.tipo}</span>
-                  <span className="evolucao-data">{h.data}</span>
+                  <span className="evolucao-tipo">{h.tipoLabel}</span>
+                  <span className="evolucao-data">{h.dataCompleta}</span>
                 </div>
                 <div className="evolucao-profissional">{h.profissional}</div>
                 <div className="evolucao-conteudo">{h.texto}</div>
@@ -315,7 +339,20 @@ const EvolucaoPaciente = () => {
           </div>
         </section>
       </main>
-</div>)}
 
-export default EvoAmbulatorio;
+      <aside className={`popup-menu-right ${menuOpen ? 'open' : ''}`}>
+        <ul>
+          <li><Link to="#"><img src={cadIcon} alt="" /> Cadastros</Link></li>
+          <li><Link to="/recepcao"><img src={recepIcon} alt="" /> Recepção</Link></li>
+          <li><Link to="/evo-ambulatorio"><img src={ambIcon} alt="" /> Ambulatório</Link></li>
+          <li><Link to="/estoque"><img src={labIcon} alt="" /> Estoque</Link></li>
+        </ul>
+        <ul>
+          <li><Link to="/login" onClick={handleLogout}><img src={logoutIcon} alt="Sair" /> Sair</Link></li>
+        </ul>
+      </aside>
 
+      {menuOpen && <div className="modal-fsph-overlay" onClick={() => setMenuOpen(false)}></div>}
+    </div>
+  );
+}
