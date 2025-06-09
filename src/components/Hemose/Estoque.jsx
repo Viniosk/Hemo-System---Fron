@@ -219,7 +219,7 @@ export default function Estoque() {
 
       <aside className={`popup-menu-right ${menuOpen ? 'open' : ''}`}>
         <ul>
-          <li><Link to="#"><img src={cadIcon} alt="Cadastros" /> Cadastros</Link></li>
+          <li><Link to="/cadastros"><img src={cadIcon} alt="Cadastros" /> Cadastros</Link></li>
           <li><Link to="/recepcao"><img src={recepIcon} alt="Recepção" /> Recepção</Link></li>
           <li><Link to="/evo-ambulatorio"><img src={ambIcon} alt="Ambulatório" /> Ambulatório</Link></li>
           <li><Link to="/estoque"><img src={labIcon} alt="Estoque" /> Estoque</Link></li>

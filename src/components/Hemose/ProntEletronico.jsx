@@ -18,12 +18,14 @@ export default function ProntuarioEletronico() {
   const [modalOpen, setModalOpen] = useState(false);
   const [pacientes, setPacientes] = useState(pacientesMock);
   const [nome, setNome] = useState('');
+  const [cpf, setCpf] = useState('');
   const [evolucao, setEvolucao] = useState('');
   const [errors, setErrors] = useState({});
 
   const validateForm = () => {
     const newErrors = {};
     if (!nome) newErrors.nome = 'Nome é obrigatório';
+    if (!cpf || !/^\d{11}$/.test(cpf)) newErrors.cpf = 'CPF inválido (11 dígitos)';
     if (!evolucao) newErrors.evolucao = 'Evolução é obrigatória';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -39,12 +41,16 @@ export default function ProntuarioEletronico() {
     const novoPaciente = {
       id: Math.random().toString(36).substr(2, 9),
       nome,
+      cpf,
+      idade: '', // Placeholder, could calculate from dataNasc if needed
+      dataNasc: '', // Placeholder
       evolucao,
       data: new Date().toLocaleDateString('pt-BR'),
     };
 
     setPacientes([...pacientes, novoPaciente]);
     setNome('');
+    setCpf('');
     setEvolucao('');
     setModalOpen(false);
     alert('Evolução registrada com sucesso!');
@@ -87,6 +93,7 @@ export default function ProntuarioEletronico() {
                 <thead>
                   <tr>
                     <th>Nome</th>
+                    <th>CPF</th>
                     <th>Evolução</th>
                     <th>Data</th>
                   </tr>
@@ -94,7 +101,7 @@ export default function ProntuarioEletronico() {
                 <tbody>
                   {pacientes.length === 0 ? (
                     <tr>
-                      <td colSpan="3" className="no-items">
+                      <td colSpan="4" className="no-items">
                         Nenhum paciente registrado.
                       </td>
                     </tr>
@@ -102,6 +109,7 @@ export default function ProntuarioEletronico() {
                     pacientes.map((paciente) => (
                       <tr key={paciente.id}>
                         <td>{paciente.nome}</td>
+                        <td>{paciente.cpf}</td>
                         <td>{paciente.evolucao}</td>
                         <td>{paciente.data}</td>
                       </tr>
@@ -116,7 +124,7 @@ export default function ProntuarioEletronico() {
 
       <aside className={`popup-menu-right ${menuOpen ? 'open' : ''}`}>
         <ul>
-          <li><Link to="#"><img src={cadIcon} alt="Cadastros" /> Cadastros</Link></li>
+          <li><Link to="/cadastros"><img src={cadIcon} alt="Cadastros" /> Cadastros</Link></li>
           <li><Link to="/recepcao"><img src={recepIcon} alt="Recepção" /> Recepção</Link></li>
           <li><Link to="/evo-ambulatorio"><img src={ambIcon} alt="Ambulatório" /> Ambulatório</Link></li>
           <li><Link to="/estoque"><img src={labIcon} alt="Estoque" /> Estoque</Link></li>
@@ -134,7 +142,7 @@ export default function ProntuarioEletronico() {
           <div className="modal-fsph">
             <div className="modal-fsph-content">
               <span className="modal-fsph-close" onClick={() => setModalOpen(false)}>
-                &times;
+                ×
               </span>
               <h2>Adicionar Evolução</h2>
               <form onSubmit={handleSubmit}>
@@ -147,6 +155,17 @@ export default function ProntuarioEletronico() {
                     onChange={(e) => setNome(e.target.value)}
                   />
                   {errors.nome && <span className="error">{errors.nome}</span>}
+                </div>
+                <div className="form-group">
+                  <label htmlFor="cpf">CPF:</label>
+                  <input
+                    type="text"
+                    id="cpf"
+                    value={cpf}
+                    onChange={(e) => setCpf(e.target.value)}
+                    maxLength="11"
+                  />
+                  {errors.cpf && <span className="error">{errors.cpf}</span>}
                 </div>
                 <div className="form-group">
                   <label htmlFor="evolucao">Evolução:</label>

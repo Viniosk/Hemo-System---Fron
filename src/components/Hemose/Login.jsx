@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from '../../styles/Login.module.css';
 import logoFSPH from '../../assets/fsph_logo.png';
 import { AuthContext } from '../../App';
@@ -20,6 +20,7 @@ export default function Login() {
     try {
       if (id === 'admin' && senha === '123') {
         setIsAuthenticated(true);
+        localStorage.setItem('isAuthenticated', 'true');
         navigate('/recepcao');
       } else {
         setError('Credenciais inválidas.');
@@ -34,7 +35,7 @@ export default function Login() {
   return (
     <div className={styles['login-container']}>
       <div className={styles['login-box']}>
-        <img src={logoFSPH} alt="FSPH Logo" className={styles.logo} />
+        <img src={logoFSPH} alt="Logo FSPH" className={styles.logo} />
         <h2>Login</h2>
         <p>Digite seus dados de acesso nos campos abaixo:</p>
         {error && <p className={styles.error}>{error}</p>}
@@ -58,12 +59,12 @@ export default function Login() {
               id="senha"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              placeholder="Digite sua senha de acesso"
+              placeholder=""
               required
               disabled={loading}
             />
           </div>
-          <a href="#" className={styles['forgot-password']}>Esqueceu sua senha?</a>
+          <Link to="/resetpassword" className={styles['forgot-password']}>Esqueceu a senha?</Link>
           <button
             type="submit"
             className={styles['login-button']}
